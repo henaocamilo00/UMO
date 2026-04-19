@@ -44,22 +44,25 @@ const AppState = {
         // Suscribirse a cambios en Firebase (Tiempo real)
         onSnapshot(docRef, (docSnap) => {
             if (docSnap.exists()) {
-                // If it exists, update our local data seamlessly
                 const cloudData = docSnap.data();
                 if(cloudData.sections) {
                     this.data.sections = cloudData.sections;
-                    // Retain the current viewing section if possible
                     if(!this.data.sections.find(s => s.id === this.data.currentSectionId)) {
                         this.data.currentSectionId = this.data.sections.length > 0 ? this.data.sections[0].id : null;
                     }
-                    UI.renderSidebar();
-                    UI.renderWorkspace();
                 }
             } else {
-                // First time creating the document in the database
                 this.saveToFirebase();
             }
             this.isInitializing = false;
+            UI.renderSidebar();
+            UI.renderWorkspace();
+        }, (error) => {
+            console.error("Firestore onSnapshot error:", error);
+            this.isInitializing = false;
+            // Aún si hay error, forzamos render para no dejar en blanco
+            UI.renderSidebar();
+            UI.renderWorkspace();
         });
     },
 
