@@ -1,71 +1,98 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBLBzT_wMTyR4v-E1Z7tQUdkJA-K8t_U_E",
+  authDomain: "umo-internacionalizacion.firebaseapp.com",
+  projectId: "umo-internacionalizacion",
+  storageBucket: "umo-internacionalizacion.firebasestorage.app",
+  messagingSenderId: "330761844790",
+  appId: "1:330761844790:web:d0ee2c39cfb01346a78097"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Keep our doc ref constant for the shared dashboard
+const docRef = doc(db, 'workspace', 'main');
+
+const DEFAULT_SECTIONS = [
+    {
+        id: 'sec-1',
+        title: 'Mapeo inicial de la empresa',
+        blocks: [
+            { id: 'b-1', type: 'title', content: 'Mapeo Inicial' },
+            { id: 'b-2', type: 'text', content: 'Aquí comienza el mapeo inicial. Todo lo que escribas aquí se sincronizará mágicamente con tu equipo.' }
+        ]
+    },
+    { id: 'sec-2', title: 'Descripción del bien y BMC', blocks: [] },
+    { id: 'sec-3', title: 'Potencialidades', blocks: [] },
+    { id: 'sec-4', title: 'Análisis DOFA', blocks: [] },
+    { id: 'sec-5', title: 'Sostenibilidad ESG', blocks: [] },
+    { id: 'sec-6', title: 'Viabilidad internacional', blocks: [] },
+    { id: 'sec-7', title: 'Objetivo SMART', blocks: [] }
+];
+
 const AppState = {
     data: {
-        sections: [
-            {
-                id: 'sec-1',
-                title: 'Mapeo inicial de la empresa',
-                blocks: [
-                    { id: 'b-1', type: 'title', content: 'Mapeo Inicial' },
-                    { id: 'b-2', type: 'text', content: 'Aquí comienza el mapeo inicial de la empresa. Edita este texto para empezar a registrar información corporativa.' }
-                ]
-            },
-            { id: 'sec-2', title: 'Descripción del bien y BMC', blocks: [] },
-            { id: 'sec-3', title: 'Potencialidades', blocks: [] },
-            { id: 'sec-4', title: 'Análisis DOFA', blocks: [] },
-            { id: 'sec-5', title: 'Sostenibilidad ESG', blocks: [] },
-            { id: 'sec-6', title: 'Viabilidad internacional', blocks: [] },
-            { id: 'sec-7', title: 'Objetivo SMART', blocks: [] }
-        ],
+        sections: DEFAULT_SECTIONS,
         currentSectionId: null
     },
+    isInitializing: true,
 
     init() {
-        const saved = localStorage.getItem('umo_dashboard_data');
-        if (saved) {
-            try {
-                const parsed = JSON.parse(saved);
-                if (parsed && parsed.sections) {
-                    this.data.sections = parsed.sections;
+        // Suscribirse a cambios en Firebase (Tiempo real)
+        onSnapshot(docRef, (docSnap) => {
+            if (docSnap.exists()) {
+                // If it exists, update our local data seamlessly
+                const cloudData = docSnap.data();
+                if(cloudData.sections) {
+                    this.data.sections = cloudData.sections;
+                    // Retain the current viewing section if possible
+                    if(!this.data.sections.find(s => s.id === this.data.currentSectionId)) {
+                        this.data.currentSectionId = this.data.sections.length > 0 ? this.data.sections[0].id : null;
+                    }
+                    UI.renderSidebar();
+                    UI.renderWorkspace();
                 }
-            } catch (e) {
-                console.error('Failed to parse saved state:', e);
+            } else {
+                // First time creating the document in the database
+                this.saveToFirebase();
             }
-        }
+            this.isInitializing = false;
+        });
     },
 
-    save() {
-        localStorage.setItem('umo_dashboard_data', JSON.stringify(this.data));
+    saveToFirebase() {
+        // Set the doc in Firebase. Triggering this will also fire onSnapshot, but that's handled safely.
+        setDoc(docRef, { sections: this.data.sections }, { merge: true })
+            .catch(err => alert("Error enviando datos: " + err.message));
     },
 
     reset() {
-        localStorage.removeItem('umo_dashboard_data');
-        location.reload();
+        this.data.sections = DEFAULT_SECTIONS;
+        this.data.currentSectionId = null;
+        this.saveToFirebase();
     },
 
     addSection() {
         const id = 'sec-' + Date.now();
-        this.data.sections.push({
-            id: id,
-            title: 'Nueva Sección',
-            blocks: []
-        });
-        this.save();
-        return id;
+        this.data.sections.push({ id: id, title: 'Nueva Sección', blocks: [] });
+        this.data.currentSectionId = id;
+        this.saveToFirebase();
     },
 
     deleteSection(id) {
         this.data.sections = this.data.sections.filter(s => s.id !== id);
-        if (this.data.currentSectionId === id) {
-            this.data.currentSectionId = null;
-        }
-        this.save();
+        if (this.data.currentSectionId === id) this.data.currentSectionId = null;
+        this.saveToFirebase();
     },
 
     updateSectionTitle(id, newTitle) {
         const sec = this.data.sections.find(s => s.id === id);
-        if (sec) {
+        if (sec && sec.title !== newTitle) {
             sec.title = newTitle;
-            this.save();
+            this.saveToFirebase();
         }
     },
 
@@ -73,16 +100,19 @@ const AppState = {
         const idx = this.data.sections.findIndex(s => s.id === id);
         if (idx === -1) return;
         
+        let swapped = false;
         if (direction === -1 && idx > 0) {
             const temp = this.data.sections[idx];
             this.data.sections[idx] = this.data.sections[idx - 1];
             this.data.sections[idx - 1] = temp;
+            swapped = true;
         } else if (direction === 1 && idx < this.data.sections.length - 1) {
             const temp = this.data.sections[idx];
             this.data.sections[idx] = this.data.sections[idx + 1];
             this.data.sections[idx + 1] = temp;
+            swapped = true;
         }
-        this.save();
+        if (swapped) this.saveToFirebase();
     },
 
     addBlock(sectionId, type) {
@@ -97,25 +127,21 @@ const AppState = {
             case 'image': content = 'https://images.unsplash.com/photo-1565514020179-026b92b64aeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'; break;
             case 'link': content = 'Etiqueta enlace|https://ejemplo.com'; break;
             case 'card': content = '<b>Título de la tarjeta</b><br>Contenido descriptivo de la tarjeta.'; break;
-            case 'list': content = '<li>Elemento de lista 1</li><li>Elemento de lista 2</li>'; break;
+            case 'list': content = '<li>Elemento 1</li><li>Elemento 2</li>'; break;
             case 'table': content = '<tr><th>Col 1</th><th>Col 2</th></tr><tr><td>Dato 1</td><td>Dato 2</td></tr>'; break;
         }
 
-        sec.blocks.push({
-            id: 'b-' + Date.now(),
-            type: type,
-            content: content
-        });
-        this.save();
+        sec.blocks.push({ id: 'b-' + Date.now(), type: type, content: content });
+        this.saveToFirebase();
     },
 
     updateBlock(sectionId, blockId, content) {
         const sec = this.data.sections.find(s => s.id === sectionId);
         if (!sec) return;
         const block = sec.blocks.find(b => b.id === blockId);
-        if (block) {
+        if (block && block.content !== content) {
             block.content = content;
-            this.save();
+            this.saveToFirebase();
         }
     },
 
@@ -123,7 +149,7 @@ const AppState = {
         const sec = this.data.sections.find(s => s.id === sectionId);
         if (!sec) return;
         sec.blocks = sec.blocks.filter(b => b.id !== blockId);
-        this.save();
+        this.saveToFirebase();
     },
 
     moveBlock(sectionId, blockId, direction) {
@@ -132,16 +158,19 @@ const AppState = {
         const idx = sec.blocks.findIndex(b => b.id === blockId);
         if (idx === -1) return;
         
+        let swapped = false;
         if (direction === -1 && idx > 0) {
             const temp = sec.blocks[idx];
             sec.blocks[idx] = sec.blocks[idx - 1];
             sec.blocks[idx - 1] = temp;
+            swapped = true;
         } else if (direction === 1 && idx < sec.blocks.length - 1) {
             const temp = sec.blocks[idx];
             sec.blocks[idx] = sec.blocks[idx + 1];
             sec.blocks[idx + 1] = temp;
+            swapped = true;
         }
-        this.save();
+        if (swapped) this.saveToFirebase();
     }
 };
 
@@ -149,13 +178,7 @@ const UI = {
     init() {
         this.cacheDOM();
         this.bindEvents();
-        this.renderSidebar();
-        
-        if (AppState.data.sections.length > 0) {
-            this.loadSection(AppState.data.sections[0].id);
-        } else {
-            this.renderWorkspace();
-        }
+        // UI Render depends on Firebase Snapshot stream now
     },
 
     cacheDOM() {
@@ -176,34 +199,21 @@ const UI = {
 
     bindEvents() {
         this.btnAddSection.addEventListener('click', () => {
-            const newId = AppState.addSection();
-            this.renderSidebar();
-            this.loadSection(newId);
+            AppState.addSection();
         });
 
         this.btnDeleteSection.addEventListener('click', () => {
-            if (AppState.data.currentSectionId) {
-                if(confirm('¿Eliminar esta sección y todo su contenido?')) {
-                    AppState.deleteSection(AppState.data.currentSectionId);
-                    this.renderSidebar();
-                    if(AppState.data.sections.length > 0) {
-                        this.loadSection(AppState.data.sections[0].id);
-                    } else {
-                        AppState.data.currentSectionId = null;
-                        this.renderWorkspace();
-                    }
-                }
+            if (AppState.data.currentSectionId && confirm('¿Eliminar esta sección?')) {
+                AppState.deleteSection(AppState.data.currentSectionId);
             }
         });
 
         this.currentTitle.addEventListener('blur', (e) => {
             if (AppState.data.currentSectionId) {
                 AppState.updateSectionTitle(AppState.data.currentSectionId, e.target.innerText);
-                this.renderSidebar();
             }
         });
 
-        // Add Content Modal
         this.btnAddContent.addEventListener('click', () => {
             this.modalAddContent.classList.add('active');
         });
@@ -219,14 +229,13 @@ const UI = {
                 const type = e.currentTarget.dataset.type;
                 if (AppState.data.currentSectionId) {
                     AppState.addBlock(AppState.data.currentSectionId, type);
-                    this.renderWorkspace();
                 }
                 this.modalAddContent.classList.remove('active');
             });
         });
 
         this.btnReset.addEventListener('click', () => {
-            if(confirm('ATENCIÓN: Esto borrará toda tu información actual y restaurará las secciones por defecto. ¿Continuar?')) {
+            if(confirm('ATENCIÓN: Borrará la base de datos entera de UMO. ¿Seguro?')) {
                 AppState.reset();
             }
         });
@@ -246,29 +255,23 @@ const UI = {
             `;
             
             li.querySelector('.section-name').addEventListener('click', () => {
-                this.loadSection(sec.id);
+                AppState.data.currentSectionId = sec.id;
+                this.renderSidebar();
+                this.renderWorkspace();
             });
 
             li.querySelector('[data-action="up"]').addEventListener('click', (e) => {
                 e.stopPropagation();
                 AppState.moveSection(sec.id, -1);
-                this.renderSidebar();
             });
 
             li.querySelector('[data-action="down"]').addEventListener('click', (e) => {
                 e.stopPropagation();
                 AppState.moveSection(sec.id, 1);
-                this.renderSidebar();
             });
 
             this.sectionList.appendChild(li);
         });
-    },
-
-    loadSection(id) {
-        AppState.data.currentSectionId = id;
-        this.renderSidebar();
-        this.renderWorkspace();
     },
 
     renderWorkspace() {
@@ -279,9 +282,10 @@ const UI = {
             this.mainHeader.style.display = 'none';
             this.workspace.innerHTML = `
                 <div class="empty-state">
-                    <i class="ri-dashboard-line"></i>
-                    <h2>Bienvenido a UMO Workspace</h2>
-                    <p>Crea una nueva sección en el panel lateral.</p>
+                    <i class="ri-refresh-line ri-spin" style="display: ${AppState.isInitializing ? 'block' : 'none'}; font-size:2rem; margin-bottom:10px;"></i>
+                    <i class="ri-dashboard-line" style="display: ${AppState.isInitializing ? 'none' : 'block'};"></i>
+                    <h2>Conectado con la Nube</h2>
+                    <p>Selecciona o crea una nueva sección.</p>
                 </div>
             `;
             return;
@@ -310,65 +314,54 @@ const UI = {
             blockEl.className = 'content-block';
             blockEl.dataset.id = block.id;
 
-            // Render block content
             let contentHtml = '';
             let contentEditableAttr = 'contenteditable="true"';
             
             switch (block.type) {
                 case 'title':
-                    contentHtml = `<h2 class="umo-title" ${contentEditableAttr}>${block.content}</h2>`;
-                    break;
+                    contentHtml = `<h2 class="umo-title" ${contentEditableAttr}>${block.content}</h2>`; break;
                 case 'subtitle':
-                    contentHtml = `<h3 class="umo-subtitle" ${contentEditableAttr}>${block.content}</h3>`;
-                    break;
+                    contentHtml = `<h3 class="umo-subtitle" ${contentEditableAttr}>${block.content}</h3>`; break;
                 case 'text':
-                    contentHtml = `<p class="umo-text" ${contentEditableAttr}>${block.content}</p>`;
-                    break;
+                    contentHtml = `<p class="umo-text" ${contentEditableAttr}>${block.content}</p>`; break;
                 case 'image':
                     contentHtml = `
                         <div class="umo-image-wrapper">
                             <img src="${block.content}" alt="Image" />
-                            <div class="btn btn-primary btn-sm" style="position:absolute; top:8px; right:8px; z-index:10;" onclick="UI.promptImageChange('${sec.id}', '${block.id}', '${block.content}')">Cambiarl URL</div>
+                            <div class="btn btn-primary btn-sm" style="position:absolute; top:8px; right:8px; z-index:10;" onclick="window.UI.promptImageChange('${sec.id}', '${block.id}', '${block.content}')">Cambiarl URL</div>
                         </div>
-                    `;
-                    break;
+                    `; break;
                 case 'link':
                     let [label, url] = block.content.split('|');
                     if(!url) url = '#';
                     contentHtml = `
                         <div>
                             <a href="${url}" target="_blank" class="umo-link">${label} <i class="ri-external-link-line"></i></a>
-                            <button class="btn btn-outline btn-sm ml-2" onclick="UI.promptLinkChange('${sec.id}', '${block.id}', '${block.content}')"><i class="ri-edit-line"></i> Editar enlace</button>
+                            <button class="btn btn-outline btn-sm ml-2" onclick="window.UI.promptLinkChange('${sec.id}', '${block.id}', '${block.content}')"><i class="ri-edit-line"></i> Editar enlace</button>
                         </div>
-                    `;
-                    break;
+                    `; break;
                 case 'card':
-                    contentHtml = `<div class="umo-card" ${contentEditableAttr}>${block.content}</div>`;
-                    break;
+                    contentHtml = `<div class="umo-card" ${contentEditableAttr}>${block.content}</div>`; break;
                 case 'list':
-                    contentHtml = `<ul class="umo-list" ${contentEditableAttr}>${block.content}</ul>`;
-                    break;
+                    contentHtml = `<ul class="umo-list" ${contentEditableAttr}>${block.content}</ul>`; break;
                 case 'table':
                     contentHtml = `
                         <div style="overflow-x:auto;">
-                            <table class="umo-table">
-                                <tbody ${contentEditableAttr}>${block.content}</tbody>
-                            </table>
+                            <table class="umo-table"><tbody ${contentEditableAttr}>${block.content}</tbody></table>
                         </div>
-                    `;
-                    break;
+                    `; break;
             }
 
             blockEl.innerHTML = `
                 ${contentHtml}
                 <div class="block-actions">
-                    <button class="btn-icon" title="Subir" onclick="UI.moveBlock('${sec.id}', '${block.id}', -1)"><i class="ri-arrow-up-line"></i></button>
-                    <button class="btn-icon" title="Bajar" onclick="UI.moveBlock('${sec.id}', '${block.id}', 1)"><i class="ri-arrow-down-line"></i></button>
-                    <button class="btn-icon text-danger" title="Eliminar" onclick="UI.deleteBlock('${sec.id}', '${block.id}')"><i class="ri-delete-bin-line"></i></button>
+                    <button class="btn-icon" title="Subir" onclick="window.UI.moveBlock('${sec.id}', '${block.id}', -1)"><i class="ri-arrow-up-line"></i></button>
+                    <button class="btn-icon" title="Bajar" onclick="window.UI.moveBlock('${sec.id}', '${block.id}', 1)"><i class="ri-arrow-down-line"></i></button>
+                    <button class="btn-icon text-danger" title="Eliminar" onclick="window.UI.deleteBlock('${sec.id}', '${block.id}')"><i class="ri-delete-bin-line"></i></button>
                 </div>
             `;
 
-            // Setup blur event for auto save
+            // Auto-save on blur
             const editableEl = blockEl.querySelector('[contenteditable="true"]');
             if (editableEl) {
                 editableEl.addEventListener('blur', (e) => {
@@ -383,22 +376,19 @@ const UI = {
     },
 
     deleteBlock(secId, blockId) {
-        if(confirm('¿Eliminar bloque de contenido?')) {
+        if(confirm('¿Eliminar bloque permanentemente?')) {
             AppState.deleteBlock(secId, blockId);
-            this.renderWorkspace();
         }
     },
 
     moveBlock(secId, blockId, direction) {
         AppState.moveBlock(secId, blockId, direction);
-        this.renderWorkspace();
     },
 
     promptImageChange(secId, blockId, currentUrl) {
         const newUrl = prompt('Ingresa la nueva URL de la imagen:', currentUrl);
         if (newUrl !== null) {
             AppState.updateBlock(secId, blockId, newUrl);
-            this.renderWorkspace();
         }
     },
 
@@ -413,14 +403,12 @@ const UI = {
         if (newUrl === null) return;
         
         AppState.updateBlock(secId, blockId, `${newLabel}|${newUrl}`);
-        this.renderWorkspace();
     }
 };
 
-// Global Exposure for inline event handlers
 window.UI = UI;
 
 document.addEventListener('DOMContentLoaded', () => {
-    AppState.init();
     UI.init();
+    AppState.init();
 });
