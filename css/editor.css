@@ -1,0 +1,372 @@
+/* Editor Panel Styles */
+.editor-panel {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    width: 320px;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    z-index: 10000;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+    font-family: 'Inter', sans-serif;
+}
+
+.editor-panel.collapsed {
+    transform: translateY(calc(100% - 50px));
+}
+
+.editor-header {
+    background-color: #1a1c20;
+    color: white;
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.editor-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.toggle-icon {
+    transition: transform 0.3s;
+}
+
+.collapsed .toggle-icon {
+    transform: rotate(180deg);
+}
+
+.editor-body {
+    padding: 20px;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.editor-section {
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.editor-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.editor-section h3 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6b7280;
+    margin-bottom: 12px;
+}
+
+/* Switch Toggle */
+.switch-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f9fafb;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+}
+
+.switch-label {
+    font-weight: 600;
+    color: #374151;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+}
+
+.switch input { 
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+}
+
+input:checked + .slider {
+    background-color: #b91c1c; /* UMO Accent */
+}
+
+input:checked + .slider:before {
+    transform: translateX(20px);
+}
+
+.slider.round {
+    border-radius: 24px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
+/* Theme Controls */
+.theme-controls .control-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.theme-controls label {
+    font-size: 14px;
+    color: #4b5563;
+}
+
+.theme-controls input[type="color"] {
+    -webkit-appearance: none;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 0;
+}
+
+.theme-controls input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+.theme-controls input[type="color"]::-webkit-color-swatch {
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+}
+
+.theme-controls select {
+    padding: 6px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+/* Add Block Menu */
+.add-block-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.add-block-btn {
+    background-color: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-family: inherit;
+    color: #4b5563;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.add-block-btn i {
+    color: #1a1c20;
+}
+
+.add-block-btn:hover {
+    background-color: #e5e7eb;
+    border-color: #d1d5db;
+}
+
+.save-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* --- LIVE EDIT MODE UI --- */
+
+/* Highlight editable text when in edit mode */
+body.is-editing [data-editable="true"] {
+    position: relative;
+    outline: 1px dashed rgba(185, 28, 28, 0.4);
+    outline-offset: 4px;
+    cursor: text;
+    transition: outline 0.2s;
+    min-height: 1em;
+    min-width: 1em;
+    border-radius: 2px;
+}
+
+body.is-editing [data-editable="true"]:hover {
+    outline: 2px solid rgba(185, 28, 28, 0.8);
+    background-color: rgba(185, 28, 28, 0.05);
+}
+
+body.is-editing [data-editable="true"]:focus {
+    outline: 2px solid #b91c1c;
+    background-color: white;
+    color: black;
+}
+
+body.is-editing a {
+    pointer-events: none; /* Prevent navigating while editing */
+}
+
+/* Dynamic Image Edit Overlay */
+body.is-editing .editable-img-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+
+body.is-editing .editable-img-wrapper::after {
+    content: "Click to change image";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0,0,0,0.7);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 12px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+}
+
+body.is-editing .editable-img-wrapper:hover::after {
+    opacity: 1;
+}
+
+body.is-editing .editable-img-wrapper img {
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+body.is-editing .editable-img-wrapper:hover img {
+    opacity: 0.8;
+    outline: 2px solid #b91c1c;
+}
+
+/* Block Hover Toolbar Wrapper */
+.block-wrapper {
+    position: relative;
+}
+
+body.is-editing .block-wrapper:hover::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    outline: 2px solid rgba(26, 28, 32, 0.2);
+    pointer-events: none;
+    z-index: 10;
+}
+
+.block-toolbar {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background-color: #1a1c20;
+    padding: 4px;
+    border-radius: 0 0 0 8px;
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.2s;
+    z-index: 100;
+    pointer-events: none;
+}
+
+body.is-editing .block-wrapper:hover .block-toolbar {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.block-toolbar button {
+    background: transparent;
+    border: none;
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.block-toolbar button:hover {
+    background-color: rgba(255,255,255,0.2);
+}
+
+.block-toolbar button.delete-btn:hover {
+    background-color: #b91c1c;
+}
+
+/* Prompt Overlay */
+.overlay-prompt {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20000;
+}
+
+.overlay-content {
+    background: white;
+    padding: 24px;
+    border-radius: 8px;
+    width: 400px;
+    max-width: 90%;
+}
+
+.overlay-content h3 {
+    margin-bottom: 16px;
+}
+
+.overlay-content input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-bottom: 16px;
+}
+
+.overlay-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}

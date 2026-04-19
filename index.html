@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UMO Internal Workspace</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet"/>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>UMO</h2>
+                <span class="badge">Workspace</span>
+            </div>
+            
+            <div class="sidebar-nav-container">
+                <div class="sidebar-title">
+                    <span>SECCIONES</span>
+                    <button id="btn-add-section" class="icon-btn" title="Nueva sección"><i class="ri-add-line"></i></button>
+                </div>
+                <!-- Implement native Drag & Drop for reordering -->
+                <ul id="section-list" class="section-list">
+                    <!-- Sections rendered here -->
+                </ul>
+            </div>
+            
+            <div class="sidebar-footer">
+                <p>UMO Internal System</p>
+                <button id="btn-reset" class="btn btn-outline-danger btn-sm mt-2" title="Reiniciar toda la plataforma">
+                    <i class="ri-refresh-line"></i> Reset
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="main-header" id="main-header" style="display: none;">
+                <div class="header-left">
+                    <h1 id="current-section-title" data-editable="true">Selecciona una sección</h1>
+                </div>
+                <div class="header-right">
+                    <button class="btn btn-outline" id="btn-delete-section" title="Eliminar Sección actual">
+                        <i class="ri-delete-bin-line"></i>
+                    </button>
+                    <button class="btn btn-primary" id="btn-add-content">
+                        <i class="ri-add-fill"></i> Bloque
+                    </button>
+                </div>
+            </header>
+
+            <div class="content-workspace" id="workspace">
+                <div class="empty-state">
+                    <i class="ri-dashboard-line"></i>
+                    <h2>Bienvenido a UMO Workspace</h2>
+                    <p>Selecciona una sección en el panel lateral o crea una nueva para comenzar.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal: Add Content Block -->
+    <div id="modal-add-content" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Agregar Bloque de Contenido</h3>
+                <button class="btn btn-icon close-modal"><i class="ri-close-line"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="block-types-grid">
+                    <button class="block-type-btn" data-type="title">
+                        <i class="ri-heading"></i>
+                        <span>Título</span>
+                    </button>
+                    <button class="block-type-btn" data-type="subtitle">
+                        <i class="ri-font-size"></i>
+                        <span>Subtítulo</span>
+                    </button>
+                    <button class="block-type-btn" data-type="text">
+                        <i class="ri-text"></i>
+                        <span>Texto Largo</span>
+                    </button>
+                    <button class="block-type-btn" data-type="image">
+                        <i class="ri-image-line"></i>
+                        <span>Imagen</span>
+                    </button>
+                    <button class="block-type-btn" data-type="link">
+                        <i class="ri-link"></i>
+                        <span>Enlace / Botón</span>
+                    </button>
+                    <button class="block-type-btn" data-type="card">
+                        <i class="ri-layout-masonry-line"></i>
+                        <span>Tarjeta Info</span>
+                    </button>
+                    <button class="block-type-btn" data-type="list">
+                        <i class="ri-list-unordered"></i>
+                        <span>Lista</span>
+                    </button>
+                    <button class="block-type-btn" data-type="table">
+                        <i class="ri-table-2"></i>
+                        <span>Tabla</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
