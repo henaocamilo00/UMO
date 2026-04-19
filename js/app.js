@@ -408,7 +408,13 @@ const UI = {
 
 window.UI = UI;
 
-document.addEventListener('DOMContentLoaded', () => {
+function bootstrapApp() {
     UI.init();
     AppState.init();
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bootstrapApp);
+} else {
+    bootstrapApp();
+}
