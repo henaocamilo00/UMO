@@ -33,6 +33,99 @@ const DEFAULT_SECTIONS = [
     { id: 'sec-7', title: 'Objetivo SMART', blocks: [] }
 ];
 
+const getMacroBlocks = () => [
+    {
+        id: 'b-chart-pib-' + Date.now(),
+        type: 'chart',
+        content: JSON.stringify({
+            type: 'line',
+            data: {
+                labels: ['2021', '2022', '2023', '2024', '2025'],
+                datasets: [
+                    { label: 'IOWA', borderColor: '#1d3557', backgroundColor: '#1d3557', borderWidth: 3, tension: 0.3, data: [225055.3, 244156.8, 253166.5, 265794.5, 277110.1] },
+                    { label: 'NEBRASKA', borderColor: '#457b9d', backgroundColor: '#457b9d', borderWidth: 3, tension: 0.3, data: [150952.5, 167840.2, 183780.9, 189242.7, 198073.3] }
+                ]
+            },
+            options: { responsive: true, plugins: { title: { display: true, text: 'PIB TOTAL (MILLONES USD)', font: { size: 16 } } } }
+        })
+    },
+    {
+        id: 'b-chart-manuf-' + Date.now() + 1,
+        type: 'chart',
+        content: JSON.stringify({
+            type: 'line',
+            data: {
+                labels: ['2021', '2022', '2023', '2024', '2025'],
+                datasets: [
+                    { label: 'IOWA', borderColor: '#e63946', backgroundColor: '#e63946', borderWidth: 3, tension: 0.3, data: [36903.4, 39984.6, 43088.0, 44348.1, 43980.0] },
+                    { label: 'NEBRASKA', borderColor: '#f4a261', backgroundColor: '#f4a261', borderWidth: 3, tension: 0.3, data: [16887.0, 16729.4, 16316.1, 16490.3, 16432.3] }
+                ]
+            },
+            options: { responsive: true, plugins: { title: { display: true, text: 'PIB DEL SECTOR MANUFACTURA (MILLONES USD)', font: { size: 16 } } } }
+        })
+    },
+    {
+        id: 'b-chart-percapita-' + Date.now() + 2,
+        type: 'chart',
+        content: JSON.stringify({
+            type: 'line',
+            data: {
+                labels: ['2021', '2022', '2023', '2024', '2025'],
+                datasets: [
+                    { label: 'IOWA', borderColor: '#2a9d8f', backgroundColor: '#2a9d8f', borderWidth: 3, tension: 0.3, data: [70351, 76254, 78752, 82278, 85570] },
+                    { label: 'NEBRASKA', borderColor: '#e9c46a', backgroundColor: '#e9c46a', borderWidth: 3, tension: 0.3, data: [76832, 85086, 92437, 94358, 98153] }
+                ]
+            },
+            options: { responsive: true, plugins: { title: { display: true, text: 'PIB PER CÁPITA (USD POR PERSONA)', font: { size: 16 } } } }
+        })
+    },
+    {
+        id: 'b-chart-empleo-' + Date.now() + 3,
+        type: 'chart',
+        content: JSON.stringify({
+            type: 'line',
+            data: {
+                labels: ['2021', '2022', '2023', '2024', '2025'],
+                datasets: [
+                    { label: 'IOWA', borderColor: '#8338ec', backgroundColor: '#8338ec', borderWidth: 3, tension: 0.3, data: [1539.0, 1572.4, 1593.0, 1598.8, 1588.6] },
+                    { label: 'NEBRASKA', borderColor: '#ff006e', backgroundColor: '#ff006e', borderWidth: 3, tension: 0.3, data: [1007.1, 1026.1, 1048.8, 1058.6, 1060.2] }
+                ]
+            },
+            options: { responsive: true, plugins: { title: { display: true, text: 'NÚMERO DE EMPLEOS (MILES)', font: { size: 16 } } } }
+        })
+    },
+    {
+        id: 'b-chart-desempleo-' + Date.now() + 4,
+        type: 'chart',
+        content: JSON.stringify({
+            type: 'line',
+            data: {
+                labels: ['2021', '2022', '2023', '2024', '2025'],
+                datasets: [
+                    { label: 'IOWA', borderColor: '#fb5607', backgroundColor: '#fb5607', borderWidth: 3, tension: 0.3, data: [3.9, 2.9, 3.0, 3.2, 3.5] },
+                    { label: 'NEBRASKA', borderColor: '#ffbe0b', backgroundColor: '#ffbe0b', borderWidth: 3, tension: 0.3, data: [2.7, 2.2, 2.3, 2.7, 3.0] }
+                ]
+            },
+            options: { responsive: true, plugins: { title: { display: true, text: 'TASA DE DESEMPLEO (%)', font: { size: 16 } } } }
+        })
+    },
+    {
+        id: 'b-chart-interes-' + Date.now() + 5,
+        type: 'chart',
+        content: JSON.stringify({
+            type: 'line',
+            data: {
+                labels: ['2021', '2022', '2023', '2024', '2025'],
+                datasets: [
+                    { label: 'IOWA', borderColor: '#3a86ff', backgroundColor: '#3a86ff', borderWidth: 3, tension: 0.3, data: [0.25, 4.50, 5.50, 4.50, 3.75] },
+                    { label: 'NEBRASKA', borderColor: '#8338ec', backgroundColor: '#8338ec', borderWidth: 3, tension: 0.3, borderDash: [5, 5], data: [0.25, 4.50, 5.50, 4.50, 3.75] }
+                ]
+            },
+            options: { responsive: true, plugins: { title: { display: true, text: 'TASA DE INTERÉS (%)', font: { size: 16 } } } }
+        })
+    }
+];
+
 const AppState = {
     data: {
         sections: DEFAULT_SECTIONS,
@@ -48,31 +141,17 @@ const AppState = {
                 if(cloudData.sections) {
                     let needsSave = false;
                     cloudData.sections.forEach(sec => {
-                        if (sec.title.toLowerCase() === 'nueva sección' || sec.title.toLowerCase() === 'nueva seccion' || sec.title === 'Nueva seccion') {
-                            sec.title = 'PIB TOTAL (MILLONES USD)';
-                            if (sec.blocks.length === 0) {
-                                sec.blocks.push({
-                                    id: 'b-chart-' + Date.now(),
-                                    type: 'chart',
-                                    content: JSON.stringify({
-                                        type: 'line',
-                                        data: {
-                                            labels: ['2021', '2022', '2023', '2024', '2025'],
-                                            datasets: [
-                                                { label: 'IOWA', borderColor: '#1d3557', backgroundColor: '#1d3557', borderWidth: 3, tension: 0.3, data: [225055.3, 244156.8, 253166.5, 265794.5, 277110.1] },
-                                                { label: 'NEBRASKA', borderColor: '#457b9d', backgroundColor: '#457b9d', borderWidth: 3, tension: 0.3, data: [150952.5, 167840.2, 183780.9, 189242.7, 198073.3] }
-                                            ]
-                                        },
-                                        options: {
-                                            responsive: true,
-                                            plugins: {
-                                                title: { display: true, text: 'PIB TOTAL (MILLONES USD)', font: { size: 16 } }
-                                            }
-                                        }
-                                    })
-                                });
+                        const t = sec.title.toLowerCase();
+                        if (t === 'nueva sección' || t === 'nueva seccion' || t === 'pib total (millones usd)' || t === 'indicadores macroeconómicos') {
+                            if (sec.title !== 'Indicadores Macroeconómicos') {
+                                sec.title = 'Indicadores Macroeconómicos';
+                                needsSave = true;
                             }
-                            needsSave = true;
+                            // Reemplazamos todos los bloques para sincronizar las nuevas gráficas que pidió el usuario si antes tenía 1 gráfica
+                            if (sec.blocks.length <= 1) {
+                                sec.blocks = getMacroBlocks();
+                                needsSave = true;
+                            }
                         }
                     });
                     this.data.sections = cloudData.sections;
@@ -112,23 +191,7 @@ const AppState = {
 
     addSection() {
         const id = 'sec-' + Date.now();
-        this.data.sections.push({ id: id, title: 'PIB TOTAL (MILLONES USD)', blocks: [
-            {
-                id: 'b-chart-' + Date.now(),
-                type: 'chart',
-                content: JSON.stringify({
-                    type: 'line',
-                    data: {
-                        labels: ['2021', '2022', '2023', '2024', '2025'],
-                        datasets: [
-                            { label: 'IOWA', borderColor: '#1d3557', backgroundColor: '#1d3557', borderWidth: 3, tension: 0.3, data: [225055.3, 244156.8, 253166.5, 265794.5, 277110.1] },
-                            { label: 'NEBRASKA', borderColor: '#457b9d', backgroundColor: '#457b9d', borderWidth: 3, tension: 0.3, data: [150952.5, 167840.2, 183780.9, 189242.7, 198073.3] }
-                        ]
-                    },
-                    options: { responsive: true, plugins: { title: { display: true, text: 'PIB TOTAL (MILLONES USD)', font: { size: 16 } } } }
-                })
-            }
-        ] });
+        this.data.sections.push({ id: id, title: 'Indicadores Macroeconómicos', blocks: getMacroBlocks() });
         this.data.currentSectionId = id;
         this.saveToFirebase();
     },
