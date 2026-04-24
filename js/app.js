@@ -46,9 +46,41 @@ const AppState = {
             if (docSnap.exists()) {
                 const cloudData = docSnap.data();
                 if(cloudData.sections) {
+                    let needsSave = false;
+                    cloudData.sections.forEach(sec => {
+                        if (sec.title.toLowerCase() === 'nueva sección' || sec.title.toLowerCase() === 'nueva seccion' || sec.title === 'Nueva seccion') {
+                            sec.title = 'PIB TOTAL (MILLONES USD)';
+                            if (sec.blocks.length === 0) {
+                                sec.blocks.push({
+                                    id: 'b-chart-' + Date.now(),
+                                    type: 'chart',
+                                    content: JSON.stringify({
+                                        type: 'line',
+                                        data: {
+                                            labels: ['2021', '2022', '2023', '2024', '2025'],
+                                            datasets: [
+                                                { label: 'IOWA', borderColor: '#1d3557', backgroundColor: '#1d3557', borderWidth: 3, tension: 0.3, data: [225055.3, 244156.8, 253166.5, 265794.5, 277110.1] },
+                                                { label: 'NEBRASKA', borderColor: '#457b9d', backgroundColor: '#457b9d', borderWidth: 3, tension: 0.3, data: [150952.5, 167840.2, 183780.9, 189242.7, 198073.3] }
+                                            ]
+                                        },
+                                        options: {
+                                            responsive: true,
+                                            plugins: {
+                                                title: { display: true, text: 'PIB TOTAL (MILLONES USD)', font: { size: 16 } }
+                                            }
+                                        }
+                                    })
+                                });
+                            }
+                            needsSave = true;
+                        }
+                    });
                     this.data.sections = cloudData.sections;
                     if(!this.data.sections.find(s => s.id === this.data.currentSectionId)) {
                         this.data.currentSectionId = this.data.sections.length > 0 ? this.data.sections[0].id : null;
+                    }
+                    if (needsSave) {
+                        this.saveToFirebase();
                     }
                 }
             } else {
@@ -80,7 +112,23 @@ const AppState = {
 
     addSection() {
         const id = 'sec-' + Date.now();
-        this.data.sections.push({ id: id, title: 'Nueva Sección', blocks: [] });
+        this.data.sections.push({ id: id, title: 'PIB TOTAL (MILLONES USD)', blocks: [
+            {
+                id: 'b-chart-' + Date.now(),
+                type: 'chart',
+                content: JSON.stringify({
+                    type: 'line',
+                    data: {
+                        labels: ['2021', '2022', '2023', '2024', '2025'],
+                        datasets: [
+                            { label: 'IOWA', borderColor: '#1d3557', backgroundColor: '#1d3557', borderWidth: 3, tension: 0.3, data: [225055.3, 244156.8, 253166.5, 265794.5, 277110.1] },
+                            { label: 'NEBRASKA', borderColor: '#457b9d', backgroundColor: '#457b9d', borderWidth: 3, tension: 0.3, data: [150952.5, 167840.2, 183780.9, 189242.7, 198073.3] }
+                        ]
+                    },
+                    options: { responsive: true, plugins: { title: { display: true, text: 'PIB TOTAL (MILLONES USD)', font: { size: 16 } } } }
+                })
+            }
+        ] });
         this.data.currentSectionId = id;
         this.saveToFirebase();
     },
@@ -132,6 +180,17 @@ const AppState = {
             case 'card': content = '<b>Título de la tarjeta</b><br>Contenido descriptivo de la tarjeta.'; break;
             case 'list': content = '<li>Elemento 1</li><li>Elemento 2</li>'; break;
             case 'table': content = '<tr><th>Col 1</th><th>Col 2</th></tr><tr><td>Dato 1</td><td>Dato 2</td></tr>'; break;
+            case 'chart': content = JSON.stringify({
+                type: 'line',
+                data: {
+                    labels: ['2021', '2022', '2023', '2024', '2025'],
+                    datasets: [
+                        { label: 'IOWA', borderColor: '#1d3557', backgroundColor: '#1d3557', borderWidth: 3, tension: 0.3, data: [225055.3, 244156.8, 253166.5, 265794.5, 277110.1] },
+                        { label: 'NEBRASKA', borderColor: '#457b9d', backgroundColor: '#457b9d', borderWidth: 3, tension: 0.3, data: [150952.5, 167840.2, 183780.9, 189242.7, 198073.3] }
+                    ]
+                },
+                options: { responsive: true, plugins: { title: { display: true, text: 'PIB TOTAL (MILLONES USD)', font: { size: 16 } } } }
+            }); break;
         }
 
         sec.blocks.push({ id: 'b-' + Date.now(), type: type, content: content });
@@ -278,6 +337,7 @@ const UI = {
     },
 
     renderWorkspace() {
+        let chartConfigs = [];
         const sectionId = AppState.data.currentSectionId;
         const sec = AppState.data.sections.find(s => s.id === sectionId);
 
@@ -353,6 +413,18 @@ const UI = {
                             <table class="umo-table"><tbody ${contentEditableAttr}>${block.content}</tbody></table>
                         </div>
                     `; break;
+                case 'chart':
+                    const canvasId = 'chart-' + block.id;
+                    contentHtml = `
+                        <div class="umo-chart-wrapper" style="width: 100%; max-width: 800px; margin: 0 auto; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                            <canvas id="${canvasId}"></canvas>
+                        </div>
+                    `;
+                    try {
+                        const config = JSON.parse(block.content);
+                        chartConfigs.push({ canvasId, config });
+                    } catch(e) { console.error('Invalid chart config', e); }
+                    break;
             }
 
             blockEl.innerHTML = `
@@ -376,6 +448,14 @@ const UI = {
         });
 
         this.workspace.appendChild(wrapper);
+
+        // Render charts after they are in the DOM
+        chartConfigs.forEach(chartData => {
+            const ctx = document.getElementById(chartData.canvasId);
+            if (ctx) {
+                new Chart(ctx, chartData.config);
+            }
+        });
     },
 
     deleteBlock(secId, blockId) {
