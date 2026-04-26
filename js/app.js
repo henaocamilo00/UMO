@@ -110,18 +110,18 @@ const getMacroBlocks = () => [
         })
     },
     {
-        id: 'b-chart-interes-' + Date.now() + 5,
+        id: 'b-chart-tax-' + Date.now() + 5,
         type: 'chart',
         content: JSON.stringify({
             type: 'line',
             data: {
                 labels: ['2021', '2022', '2023', '2024', '2025'],
                 datasets: [
-                    { label: 'IOWA', borderColor: '#3a86ff', backgroundColor: '#3a86ff', borderWidth: 3, tension: 0.3, data: [0.25, 4.50, 5.50, 4.50, 3.75] },
-                    { label: 'NEBRASKA', borderColor: '#8338ec', backgroundColor: '#8338ec', borderWidth: 3, tension: 0.3, borderDash: [5, 5], data: [0.25, 4.50, 5.50, 4.50, 3.75] }
+                    { label: 'IOWA', borderColor: '#3a86ff', backgroundColor: '#3a86ff', borderWidth: 3, tension: 0.3, data: [6.0, 6.0, 6.0, 6.0, 6.0] },
+                    { label: 'NEBRASKA', borderColor: '#8338ec', backgroundColor: '#8338ec', borderWidth: 3, tension: 0.3, data: [5.5, 5.5, 5.5, 5.5, 5.5] }
                 ]
             },
-            options: { responsive: true, plugins: { title: { display: true, text: 'TASA DE INTERÉS (%)', font: { size: 16 } } } }
+            options: { responsive: true, plugins: { title: { display: true, text: 'TAX POR AÑO (%)', font: { size: 16 } } } }
         })
     }
 ];
@@ -151,6 +151,14 @@ const AppState = {
                             if (sec.blocks.length <= 1) {
                                 sec.blocks = getMacroBlocks();
                                 needsSave = true;
+                            } else {
+                                // Buscar si existe alguna gráfica de 'TASA DE INTERÉS' en este documento y cambiarla
+                                sec.blocks.forEach((block, index) => {
+                                    if (block.content && block.content.includes('TASA DE INTERÉS')) {
+                                        sec.blocks[index] = getMacroBlocks()[5];
+                                        needsSave = true;
+                                    }
+                                });
                             }
                         }
                     });
